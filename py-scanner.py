@@ -1,4 +1,4 @@
-import os, re, subprocess
+import os, sys, re, socket, subprocess
 
 
 def validate_address_format(address):
@@ -16,8 +16,40 @@ def ping(hostname):
         return False
 
 
+def error_check(hostname):
+    if not validate_address_format(hostname):
+        print("Invalid hostname: " + hostname)
+        exit(1)
+    if not ping(hostname):
+        print("Cannot reach hostname: " + hostname)
+        exit(1)
+
+
+def port_connect(ip, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    response = sock.connect_ex((ip, port))
+    sock.close()
+    return not response
+
+
+def port_scan(hostname, start_port, end_port):
+    if start_port is None:
+        start_port = 1
+    if end_port is None:
+        end_port = 65535
+    ip = socket.gethostbyname(hostname)
+    print("Scanning {} Port {}-{}".format(ip, start_port, end_port))
+    for port in range(start_port, end_port + 1):
+        if port_connect(ip, port):
+            print("{}:{}/TCP is open".format(ip, port))
+        else:
+            print("{}:{}/TCP is closed".format(ip, port))
+
+
 def main():
-    print(ping("google.com"))
+    hostname = sys.argv[1]
+    error_check(hostname)
+    port_scan(hostname, 21, 25)
 
 
 main()
