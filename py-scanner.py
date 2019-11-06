@@ -8,20 +8,22 @@ def validate_address_format(address):
     return re.search(ip_regex, address) or re.search(hostname_regex, address)
 
 
-def ping(hostname):
-    param = "-n" if os.name == "nt" else "-c"
-    if subprocess.call(["ping", param, "1", hostname], stdout=open(os.devnull, 'w')) == 0:
+def check_reachable(hostname):
+    try:
+        ip = socket.gethostbyname(hostname)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((ip, 80))
         return True
-    else:
+    except socket.error:
         return False
 
 
 def error_check(hostname):
     if not validate_address_format(hostname):
-        print("Invalid hostname: " + hostname)
+        print("Error: invalid hostname {} ".format(hostname))
         exit(1)
-    if not ping(hostname):
-        print("Cannot reach hostname: " + hostname)
+    if not check_reachable(hostname):
+        print("Error: {} is unreachable".format(hostname))
         exit(1)
 
 
